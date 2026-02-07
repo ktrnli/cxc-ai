@@ -1,15 +1,23 @@
 import React from 'react';
 import './App.css';
-import Running from './pages/Running';
+import ReactDOM from 'react-dom/client';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { Home, Running, Feedback } from "./pages";
+import './index.css';
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <Running />
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/running" element={<Running />} />
+        <Route path="/feedback" element={<Feedback />} />
+      </Routes>
+    </Router>
   );
-}
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
 
 export default App;
