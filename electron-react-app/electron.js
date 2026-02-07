@@ -36,3 +36,12 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+app.whenReady().then(() => {
+  session.defaultSession.setPermissionRequestHandler(
+    (webContents, permission, callback) => {
+      if (permission === "media") callback(true);
+      else callback(false);
+    }
+  );
+});
