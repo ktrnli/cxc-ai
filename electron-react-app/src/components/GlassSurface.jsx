@@ -36,11 +36,13 @@ const buttonStyle = {
 /**
  * Glass surface component for glassmorphism UI.
  * - fullPage: covers viewport and centers content (for landing)
+ * - primary: oval button with glowing purple border (maestro style)
  * - to: renders as React Router Link (for nav buttons)
  * - as="button": renders as button with onClick
  */
 export default function GlassSurface({
   fullPage = false,
+  primary = false,
   to,
   as = "div",
   onClick,
@@ -56,12 +58,18 @@ export default function GlassSurface({
   };
 
   const combined = to || as === "button" ? { ...base, ...buttonStyle } : base;
+  const classNames = [
+    "glass-surface",
+    (to || as === "button") ? "glass-button" : "",
+    primary ? "glass-button--primary" : "",
+    className,
+  ].filter(Boolean).join(" ");
 
   if (to != null) {
     return (
       <Link
         to={to}
-        className={`glass-surface glass-button ${className}`.trim()}
+        className={classNames}
         style={{ ...combined, font: 'inherit' }}
         {...rest}
       >
@@ -74,8 +82,14 @@ export default function GlassSurface({
     return (
       <button
         type="button"
-        className={`glass-surface glass-button ${className}`.trim()}
-        style={{ ...combined, background: glassStyle.background, border: glassStyle.border, borderRadius: glassStyle.borderRadius }}
+        className={classNames}
+        style={{
+          ...combined,
+          background: primary ? "rgba(255, 255, 255, 0.08)" : glassStyle.background,
+          border: primary ? "1px solid rgba(180, 120, 255, 0.9)" : glassStyle.border,
+          borderRadius: primary ? 999 : glassStyle.borderRadius,
+          boxShadow: primary ? "0 0 12px rgba(160, 100, 255, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.05)" : glassStyle.boxShadow,
+        }}
         onClick={onClick}
         {...rest}
       >
@@ -86,7 +100,7 @@ export default function GlassSurface({
 
   return (
     <div
-      className={`glass-surface ${className}`.trim()}
+      className={classNames}
       style={combined}
       {...rest}
     >

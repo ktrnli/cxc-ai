@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import GlassSurface from "../components/GlassSurface";
 
 const SR = 16000;
@@ -287,59 +287,99 @@ const Running = () => {
     return `${sign}${cents.toFixed(0)}¢`;
   }, [cents]);
 
-  const textStyle = { color: "rgba(255, 255, 255, 0.95)", margin: 0, fontSize: "0.95rem" };
-  const labelStyle = { ...textStyle, opacity: 0.85, fontWeight: 500 };
-
   return (
     <div style={{ position: "relative", width: "100%", minHeight: "100vh", zIndex: 1 }}>
-      <div style={{ position: "absolute", top: "1.5rem", left: "1.5rem" }}>
-        <GlassSurface to="/">Home</GlassSurface>
-      </div>
-
-      <div style={{ position: "absolute", top: "1.5rem", right: "1.5rem" }}>
-        <GlassSurface as="button" onClick={handleMicClick}>
+      <header
+        style={{
+          position: "absolute",
+          top: "1.5rem",
+          left: "1.5rem",
+          right: "1.5rem",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          zIndex: 3,
+        }}
+      >
+        <Link to="/" className="maestro-logo" style={{ textDecoration: "none" }}>
+          <img src="/logo.png" alt="" />
+          maestro.
+        </Link>
+        <GlassSurface primary as="button" onClick={handleMicClick}>
           {listening ? "Stop Mic" : "Start Mic"}
         </GlassSurface>
+      </header>
+
+      {/* Central mic visual - retro silver microphone */}
+      <div
+        style={{
+          position: "fixed",
+          left: "50%",
+          top: "38%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 1,
+          filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.3))",
+        }}
+      >
+        <svg
+          width={72}
+          height={100}
+          viewBox="0 0 72 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ opacity: 0.95 }}
+        >
+          <defs>
+            <linearGradient id="micGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#f0f0f0" />
+              <stop offset="40%" stopColor="#c8c8c8" />
+              <stop offset="100%" stopColor="#909090" />
+            </linearGradient>
+          </defs>
+          <ellipse cx="36" cy="22" rx="20" ry="14" fill="url(#micGrad)" stroke="#707070" strokeWidth="1.5" />
+          <rect x="26" y="22" width="20" height="48" rx="3" fill="url(#micGrad)" stroke="#707070" strokeWidth="1.5" />
+          <rect x="32" y="70" width="8" height="24" rx="2" fill="url(#micGrad)" stroke="#707070" strokeWidth="1.5" />
+          <rect x="22" y="94" width="28" height="4" rx="1" fill="url(#micGrad)" stroke="#707070" strokeWidth="1" />
+        </svg>
       </div>
 
-      {/* Pitch Feedback UI (merged here) */}
+      {/* Pitch Feedback panel - glassmorphic fields */}
       <GlassSurface
         style={{
           position: "fixed",
           left: "50%",
-          top: "50%",
+          top: "72%",
           transform: "translate(-50%, -50%)",
           padding: "1.25rem 1.75rem",
-          minWidth: 260,
-          textAlign: "center",
+          minWidth: 280,
           zIndex: 2,
         }}
       >
-        <h2 style={{ ...textStyle, marginBottom: "0.75rem", fontSize: "1.1rem" }}>
-          Pitch Feedback
-        </h2>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={textStyle}>
-            <span style={labelStyle}>Status: </span>
-            {status}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="maestro-field" style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+            <span className="maestro-field-label">Status:</span>
+            <span>{status}</span>
           </div>
 
-          {hint && <div style={{ ...textStyle, opacity: 0.8 }}>{hint}</div>}
+          {hint && (
+            <div className="maestro-field" style={{ opacity: 0.9 }}>
+              {hint}
+            </div>
+          )}
 
-          <div style={textStyle}>
-            <span style={labelStyle}>Pitch (Hz): </span>
-            {pitchHz ? pitchHz.toFixed(1) : "-"}
+          <div className="maestro-field" style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+            <span className="maestro-field-label">Pitch (Hz):</span>
+            <span>{pitchHz ? pitchHz.toFixed(1) : "-"}</span>
           </div>
 
-          <div style={textStyle}>
-            <span style={labelStyle}>Note: </span>
-            {note}
+          <div className="maestro-field" style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+            <span className="maestro-field-label">Note:</span>
+            <span>{note}</span>
           </div>
 
-          <div style={textStyle}>
-            <span style={labelStyle}>Offset: </span>
-            {centsDisplay}
+          <div className="maestro-field" style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+            <span className="maestro-field-label">Offset:</span>
+            <span>{centsDisplay}</span>
           </div>
         </div>
       </GlassSurface>

@@ -1,13 +1,16 @@
 import React from 'react';
 import './App.css';
 import ReactDOM from 'react-dom/client';
-import { HashRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Outlet, Link, useLocation } from 'react-router-dom';
 import { Home, Running } from "./pages";
 import './index.css';
 import Background from './components/background';
 import GlassSurface from './components/GlassSurface';
 
 function GlassLayout() {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
   return (
     <div
       style={{
@@ -23,12 +26,14 @@ function GlassLayout() {
     >
       <GlassSurface
         style={{
-          width: '100%',
-          maxWidth: 520,
-          maxHeight: '82vh',
+          position: 'relative',
+          width: isHome ? 'min(1100px, 92vw)' : '100%',
+          maxWidth: isHome ? undefined : 720,
+          minHeight: isHome ? '75vh' : undefined,
+          maxHeight: isHome ? '92vh' : '88vh',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: 'stretch',
           justifyContent: 'flex-start',
           paddingTop: '1.75rem',
           paddingBottom: '1.75rem',
@@ -37,12 +42,48 @@ function GlassLayout() {
           overflow: 'auto',
         }}
       >
-        <nav style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <GlassSurface to="/">Home</GlassSurface>
-        </nav>
-        <main style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Outlet />
-        </main>
+        {isHome && (
+          <div
+            className="maestro-deco cassette"
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '55%',
+              transform: 'translate(-50%, -50%)',
+              width: '70%',
+              height: '60%',
+              minWidth: 280,
+              minHeight: 220,
+              backgroundImage: 'url(/cassette.png)',
+              backgroundSize: 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center center',
+              opacity: 0.9,
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+        )}
+        <header
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            marginBottom: '1.5rem',
+          }}
+        >
+          <Link to="/" className="maestro-logo" style={{ textDecoration: 'none' }}>
+            <img src="/logo.png" alt="" />
+            maestro.
+          </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
+            <Outlet />
+          </div>
+        </header>
       </GlassSurface>
     </div>
   );
@@ -51,6 +92,17 @@ function GlassLayout() {
 const App = () => {
   return (
     <div style={{ width: '100%', minHeight: '100vh', position: 'relative' }}>
+      <div
+        className="app-purple-bg"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: 'url(/purple_background.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
       <Background
         audioIntensity={2.66}
         hue={301}

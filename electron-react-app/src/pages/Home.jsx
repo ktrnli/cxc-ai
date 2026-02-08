@@ -8,6 +8,7 @@ const glassButtonLabelStyle = {
   display: "block",
   padding: "12px 24px",
   fontWeight: 600,
+  fontSize: "0.95rem",
   color: "rgba(255, 255, 255, 0.95)",
   textAlign: "center",
 };
@@ -94,11 +95,9 @@ const Home = () => {
   };
 
   return (
-    <div>
-      <h1>maestro</h1>
-
-      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "1rem" }}>
-        <GlassSurface className="glass-button" style={{ padding: 0 }}>
+    <div style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "flex-end", marginBottom: "0.5rem" }}>
+        <GlassSurface primary className="glass-button" style={{ padding: 0 }}>
           <label style={glassButtonLabelStyle} onClick={() => fileInputRef.current?.click()}>
             <input
               ref={fileInputRef}
@@ -107,21 +106,21 @@ const Home = () => {
               onChange={handleFileUpload}
               style={{ display: "none" }}
             />
-            Browse
+            Upload Sheet Music
           </label>
         </GlassSurface>
-        <GlassSurface as="button" onClick={startPractice}>
+        <GlassSurface primary as="button" onClick={startPractice}>
           Start Practice
         </GlassSurface>
       </div>
 
       {midiLoaded && (
-        <p style={{ color: "rgba(255,255,255,0.9)" }}>
+        <p style={{ color: "rgba(255,255,255,0.9)", fontSize: "0.9rem", margin: 0 }}>
           MIDI loaded ✓ ({expectedNotes.length} notes, BPM {bpm})
         </p>
       )}
 
-      {error && <p style={{ color: "rgba(255,120,120,0.95)" }}>{error}</p>}
+      {error && <p style={{ color: "rgba(255,180,180,0.95)", fontSize: "0.9rem", margin: 0 }}>{error}</p>}
     </div>
   );
 };
