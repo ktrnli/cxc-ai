@@ -11,10 +11,8 @@ import Background from './components/background';
 const App = () => {
   return (<div style={{ width: '100%', height: '600px', position: 'relative' }}>
     <Background
-      hoverIntensity={2.66}
-      rotateOnHover
+      audioIntensity={2.66}
       hue={301}
-      forceHoverState={false}
       backgroundColor="#400194"
     />
     <Router>

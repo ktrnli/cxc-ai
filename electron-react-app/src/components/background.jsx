@@ -4,9 +4,7 @@ import '../index.css';
 
 export default function Background({
   hue = 0,
-  hoverIntensity = 0.2,
-  rotateOnHover = true,
-  forceHoverState = false,
+  audioIntensity = 0.2,
   backgroundColor = '#000000'
 }) {
   const ctnDom = useRef(null);
@@ -28,9 +26,9 @@ export default function Background({
     uniform float iTime;
     uniform vec3 iResolution;
     uniform float hue;
-    uniform float hover;
+    uniform float audioLevel;
     uniform float rot;
-    uniform float hoverIntensity;
+    uniform float audioIntensity;
     uniform vec3 backgroundColor;
     varying vec2 vUv;
 
@@ -170,8 +168,8 @@ export default function Background({
       float c = cos(angle);
       uv = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
       
-      uv.x += hover * hoverIntensity * 0.1 * sin(uv.y * 10.0 + iTime);
-      uv.y += hover * hoverIntensity * 0.1 * sin(uv.x * 10.0 + iTime);
+      uv.x += audioLevel * audioIntensity * 0.1 * sin(uv.y * 10.0 + iTime);
+      uv.y += audioLevel * audioIntensity * 0.1 * sin(uv.x * 10.0 + iTime);
       
       return draw(uv);
     }
@@ -202,9 +200,9 @@ export default function Background({
           value: new Vec3(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height)
         },
         hue: { value: hue },
-        hover: { value: 0 },
+        audioLevel: { value: 0 },
         rot: { value: 0 },
-        hoverIntensity: { value: hoverIntensity },
+        audioIntensity: { value: audioIntensity },
         backgroundColor: { value: hexToVec3(backgroundColor) }
       }
     });
@@ -224,36 +222,29 @@ export default function Background({
     window.addEventListener('resize', resize);
     resize();
 
-    let targetHover = 0;
     let lastTime = 0;
     let currentRot = 0;
-    const rotationSpeed = 0.3;
+    let audioLevel = 0;
+    let stream = null;
+    let audioContext = null;
+    let analyser = null;
+    const fftSize = 256;
+    const dataArray = new Uint8Array(fftSize);
 
-    const handleMouseMove = e => {
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const width = rect.width;
-      const height = rect.height;
-      const size = Math.min(width, height);
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const uvX = ((x - centerX) / size) * 2.0;
-      const uvY = ((y - centerY) / size) * 2.0;
-
-      if (Math.sqrt(uvX * uvX + uvY * uvY) < 0.8) {
-        targetHover = 1;
-      } else {
-        targetHover = 0;
+    const initAudio = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = fftSize;
+        analyser.smoothingTimeConstant = 0.8;
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+      } catch (err) {
+        console.warn('Microphone access not available:', err.message);
       }
     };
-
-    const handleMouseLeave = () => {
-      targetHover = 0;
-    };
-
-    container.addEventListener('mousemove', handleMouseMove);
-    container.addEventListener('mouseleave', handleMouseLeave);
+    initAudio();
 
     let rafId;
     const update = t => {
@@ -262,15 +253,17 @@ export default function Background({
       lastTime = t;
       program.uniforms.iTime.value = t * 0.001;
       program.uniforms.hue.value = hue;
-      program.uniforms.hoverIntensity.value = hoverIntensity;
+      program.uniforms.audioIntensity.value = audioIntensity;
       program.uniforms.backgroundColor.value = hexToVec3(backgroundColor);
 
-      const effectiveHover = forceHoverState ? 1 : targetHover;
-      program.uniforms.hover.value += (effectiveHover - program.uniforms.hover.value) * 0.1;
-
-      if (rotateOnHover && effectiveHover > 0.5) {
-        currentRot += dt * rotationSpeed;
+      if (analyser) {
+        analyser.getByteFrequencyData(dataArray);
+        const sum = dataArray.reduce((a, b) => a + b, 0);
+        const targetLevel = Math.min(1, (sum / dataArray.length) / 128);
+        audioLevel += (targetLevel - audioLevel) * 0.15;
+        program.uniforms.audioLevel.value = audioLevel;
       }
+
       program.uniforms.rot.value = currentRot;
 
       renderer.render({ scene: mesh });
@@ -280,13 +273,13 @@ export default function Background({
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', resize);
-      container.removeEventListener('mousemove', handleMouseMove);
-      container.removeEventListener('mouseleave', handleMouseLeave);
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      if (audioContext) audioContext.close();
       container.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hue, hoverIntensity, rotateOnHover, forceHoverState, backgroundColor]);
+  }, [hue, audioIntensity, backgroundColor]);
 
   return <div ref={ctnDom} className="orb-container" />;
 }
