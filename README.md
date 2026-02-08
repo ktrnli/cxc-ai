@@ -1,6 +1,6 @@
 # Maestro
 
-A one-liner that I willl come up with later.
+Your go-to for music practice: smarter.
 
 ---
 
@@ -10,7 +10,7 @@ A one-liner that I willl come up with later.
 - [Tech Stack](#tech-stack)
 - [Setup Instructions](#setup-instructions)
   - [Backend (Python Flask)](#backend-python-flask)
-  - [Frontend (React + Vite)](#frontend-react--vite)
+  - [Frontend (React + Electron)](#frontend-react--vite)
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
@@ -34,10 +34,11 @@ Maestro is an educative and creatively designed web app that is designed for mus
 
 ## Tech Stack
 
-- **Frontend:** React, Electron, FigmaMake 
-- **Backend:** Python, Flask, CREPE
-- **AI:** CREPE for audio capture and processing 
-- **Other:** Python virtual environment for backend dependencies
+- **Frontend:** React, Electron
+- **Backend:** Python Flask, CREPE
+- **AI:** CREPE uses a pre-trained deep neural network to estimate musical pitch from raw audio (Tensorflow)
+- **Design:** FigmaMake
+- **Parsing:** @tonejs/midi
 
 ---
 
@@ -45,7 +46,7 @@ Maestro is an educative and creatively designed web app that is designed for mus
 
 ### Backend (Python Flask)
 
-1. Install Python (>=3.8 recommended)  
+1. Install Python (3.11 recommended)  
 2. Create and activate a virtual environment:
 
    ```bash
@@ -61,16 +62,10 @@ Maestro is an educative and creatively designed web app that is designed for mus
 3. Install required packages:
 
    ```bash
-   pip install flask flask-cors python-dotenv crepe
+   pip install -r requirements.txt
    ```
 
-4. Run the Flask backend:
-
-  ```bash
-  python app.py
- ```
-
-### Frontend (React + Vite)
+### Frontend (React + Electron)
 
 1. Install Node.js (>=16 recommended)  
 2. Install project dependencies:
@@ -81,12 +76,8 @@ Maestro is an educative and creatively designed web app that is designed for mus
 3. Start the development server:
 
    ```bash
-   npm start
-   ```
-4. In another terminal:
-
-   ```bash
-   npm run electron
+   cd electron-react-app
+   npm run dev
    ```
 
 ## Usage
