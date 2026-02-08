@@ -1,9 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Midi } from "@tonejs/midi";
+import GlassSurface from "../components/GlassSurface";
+
+const glassButtonLabelStyle = {
+  cursor: "pointer",
+  display: "block",
+  padding: "12px 24px",
+  fontWeight: 600,
+  color: "rgba(255, 255, 255, 0.95)",
+  textAlign: "center",
+};
 
 const Home = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [midiLoaded, setMidiLoaded] = useState(false);
   const [error, setError] = useState("");
@@ -86,17 +97,31 @@ const Home = () => {
     <div>
       <h1>maestro</h1>
 
-      <input type="file" accept=".mid,.midi" onChange={handleFileUpload} />
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "1rem" }}>
+        <GlassSurface className="glass-button" style={{ padding: 0 }}>
+          <label style={glassButtonLabelStyle} onClick={() => fileInputRef.current?.click()}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".mid,.midi"
+              onChange={handleFileUpload}
+              style={{ display: "none" }}
+            />
+            Browse
+          </label>
+        </GlassSurface>
+        <GlassSurface as="button" onClick={startPractice}>
+          Start Practice
+        </GlassSurface>
+      </div>
 
       {midiLoaded && (
-        <p style={{ color: "green" }}>
+        <p style={{ color: "rgba(255,255,255,0.9)" }}>
           MIDI loaded ✓ ({expectedNotes.length} notes, BPM {bpm})
         </p>
       )}
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <button onClick={startPractice}>Start Practice</button>
+      {error && <p style={{ color: "rgba(255,120,120,0.95)" }}>{error}</p>}
     </div>
   );
 };

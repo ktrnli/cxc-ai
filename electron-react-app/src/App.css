@@ -2,6 +2,15 @@
   text-align: center;
 }
 
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  transform: scale(1.02);
+}
+
+.glass-button:active {
+  transform: scale(0.98);
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import GlassSurface from "./GlassSurface";
 
 const SR = 16000;
 
@@ -26,18 +27,17 @@ function feedbackText(cents, deadzone = 8) {
   return `Flat by ${abs.toFixed(0)}¢`;
 }
 
-const PitchFeedback = () => {
+const PitchFeedback = ({ stream: externalStream = null }) => {
   const [listening, setListening] = useState(false);
   const [pitchHz, setPitchHz] = useState(null);
   const [note, setNote] = useState("-");
   const [cents, setCents] = useState(null);
-  const [status, setStatus] = useState("Click Start");
+  const [status, setStatus] = useState("Start Mic to begin");
   const [hint, setHint] = useState("");
 
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
   const sourceRef = useRef(null);
-  const streamRef = useRef(null);
 
   const inflightRef = useRef(false);
 
@@ -52,13 +52,10 @@ const PitchFeedback = () => {
     sourceRef.current = null;
     audioContextRef.current = null;
 
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-
     inflightRef.current = false;
 
     setListening(false);
-    setStatus("Stopped");
+    setStatus("Start Mic to begin");
     setHint("");
   }, []);
 
@@ -122,17 +119,16 @@ const PitchFeedback = () => {
     }
   }, []);
 
-  const start = useCallback(async () => {
-    setStatus("Requesting microphone…");
-    setHint("");
+  useEffect(() => {
+    if (!externalStream) return;
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    streamRef.current = stream;
+    setStatus("Listening…");
+    setListening(true);
 
     const audioContext = new AudioContext({ sampleRate: SR });
     audioContextRef.current = audioContext;
 
-    const source = audioContext.createMediaStreamSource(stream);
+    const source = audioContext.createMediaStreamSource(externalStream);
     sourceRef.current = source;
 
     const processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -147,9 +143,8 @@ const PitchFeedback = () => {
     source.connect(processor);
     processor.connect(audioContext.destination);
 
-    setListening(true);
-    setStatus("Listening…");
-  }, [sendFrame]);
+    return () => stop();
+  }, [externalStream, sendFrame, stop]);
 
   const centsDisplay = useMemo(() => {
     if (cents === null) return "-";
@@ -157,27 +152,31 @@ const PitchFeedback = () => {
     return `${sign}${cents.toFixed(0)}¢`;
   }, [cents]);
 
+  const textStyle = { color: "rgba(255, 255, 255, 0.95)", margin: 0, fontSize: "0.95rem" };
+  const labelStyle = { ...textStyle, opacity: 0.85, fontWeight: 500 };
+
   return (
-    <div style={{ padding: 16, maxWidth: 500 }}>
-      <h2>Pitch Feedback</h2>
-
-      <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
-        <div><strong>Status:</strong> {status}</div>
-        {hint && <div style={{ color: "#666" }}>{hint}</div>}
-        <div><strong>Pitch (Hz):</strong> {pitchHz ? pitchHz.toFixed(1) : "-"}</div>
-        <div><strong>Note:</strong> {note}</div>
-        <div><strong>Offset:</strong> {centsDisplay}</div>
+    <GlassSurface
+      style={{
+        position: "fixed",
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
+        padding: "1.25rem 1.75rem",
+        minWidth: 260,
+        textAlign: "center",
+        zIndex: 2,
+      }}
+    >
+      <h2 style={{ ...textStyle, marginBottom: "0.75rem", fontSize: "1.1rem" }}>Pitch Feedback</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={textStyle}><span style={labelStyle}>Status: </span>{status}</div>
+        {hint && <div style={{ ...textStyle, opacity: 0.8 }}>{hint}</div>}
+        <div style={textStyle}><span style={labelStyle}>Pitch (Hz): </span>{pitchHz ? pitchHz.toFixed(1) : "-"}</div>
+        <div style={textStyle}><span style={labelStyle}>Note: </span>{note}</div>
+        <div style={textStyle}><span style={labelStyle}>Offset: </span>{centsDisplay}</div>
       </div>
-
-      <button onClick={listening ? stop : start}>
-        {listening ? "Stop" : "Start"}
-      </button>
-
-      <p style={{ marginTop: 10, color: "#666" }}>
-        Shows sharp/flat vs nearest note. If you use <code>/session_start</code>,
-        feedback will be relative to the expected note instead.
-      </p>
-    </div>
+    </GlassSurface>
   );
 };
 

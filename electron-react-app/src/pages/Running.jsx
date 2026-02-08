@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import PitchFeedback from "../components/PitchFeedback";
+import GlassSurface from "../components/GlassSurface";
 
 const Running = () => {
   const [listening, setListening] = useState(false);
+  const [stream, setStream] = useState(null);
   const navigate = useNavigate();
 
   const audioContextRef = useRef(null);
@@ -40,6 +42,7 @@ const Running = () => {
       streamRef.current = null;
 
       setListening(false);
+      setStream(null);
 
       if (shouldNavigate) {
         navigate("/");
@@ -66,13 +69,14 @@ const Running = () => {
       body: JSON.stringify({ expectedNotes, toleranceCents }),
     });
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    streamRef.current = stream;
+    const newStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    streamRef.current = newStream;
+    setStream(newStream);
 
     const audioContext = new AudioContext({ sampleRate: 16000 });
     audioContextRef.current = audioContext;
 
-    const source = audioContext.createMediaStreamSource(stream);
+    const source = audioContext.createMediaStreamSource(newStream);
     sourceRef.current = source;
 
     const processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -89,6 +93,14 @@ const Running = () => {
     setListening(true);
   };
 
+  const handleMicClick = () => {
+    if (listening) {
+      stopAudio(true);
+    } else {
+      startAudio();
+    }
+  };
+
   const sendAudioFrame = (audioArray) => {
     fetch("/audio", {
       method: "POST",
@@ -98,11 +110,16 @@ const Running = () => {
   };
 
   return (
-    <div>
-      <button onClick={listening ? () => stopAudio(true) : startAudio}>
-        {listening ? "Stop Mic" : "Start Mic"}
-      </button>
-      <PitchFeedback />
+    <div style={{ position: "relative", width: "100%", minHeight: "100vh", zIndex: 1 }}>
+      <div style={{ position: "absolute", top: "1.5rem", left: "1.5rem" }}>
+        <GlassSurface to="/">Home</GlassSurface>
+      </div>
+      <div style={{ position: "absolute", top: "1.5rem", right: "1.5rem" }}>
+        <GlassSurface as="button" onClick={handleMicClick}>
+          {listening ? "Stop Mic" : "Start Mic"}
+        </GlassSurface>
+      </div>
+      <PitchFeedback stream={stream} />
     </div>
   );
 };
