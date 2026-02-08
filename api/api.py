@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 import crepe
+import time
+import math
 
 app = Flask(__name__)
 CORS(app)
@@ -14,6 +16,12 @@ STEP_SIZE_MS = 10
 CONF_THRESH = 0.5
 
 audio_buffer = np.zeros((0,), dtype=np.float32)
+
+# session state
+session_active = False
+session_t0 = None
+expected_notes = []
+tolerance_cents = 35
 
 def _append_to_buffer(x: np.ndarray) -> None:
     global audio_buffer
@@ -78,6 +86,28 @@ def receive_audio():
             current_pitch_hz = None
             median_pitch_hz = None
 
+        # record time
+        now_sec = time.time()
+        t_sec = (now_sec - session_t0) if (session_active and session_t0 is not None) else None
+
+        expected_midi = None
+        expected_note = None
+        detected_midi = None
+        cents_error = None
+        in_tune = None
+
+        if t_sec is not None:
+            expected_midi = get_expected_midi_at(t_sec)
+            if expected_midi is not None:
+                expected_note = midi_to_note_name(expected_midi)
+
+        if current_pitch_hz is not None:
+            detected_midi = hz_to_midi(current_pitch_hz)
+
+        if expected_midi is not None and detected_midi is not None:
+            cents_error = float((detected_midi - expected_midi) * 100.0)
+            in_tune = bool(abs(cents_error) <= tolerance_cents)
+
         # pitch contour every Nth frame
         N = 5
         t_out = times[::N].tolist()
@@ -87,7 +117,16 @@ def receive_audio():
         return jsonify({
             "status": "ok",
             "buffer_seconds": audio_buffer.size / SR,
+
+            "t_sec": t_sec,
+            "expected_midi": expected_midi,
+            "expected_note": expected_note,
+
             "current_pitch_hz": current_pitch_hz,
+            "detected_midi": detected_midi,
+            "cents_error": cents_error,
+            "in_tune": in_tune,
+
             "median_pitch_hz": median_pitch_hz,
             "contour": {
                 "t": t_out,
@@ -100,9 +139,71 @@ def receive_audio():
 
 @app.route("/reset", methods=["POST"])
 def reset():
-    global audio_buffer
+    global audio_buffer, session_active, session_t0, expected_notes
     audio_buffer = np.zeros((0,), dtype=np.float32)
+    session_active = False
+    session_t0 = None
+    expected_notes = []
     return jsonify({"status": "reset"})
+
+def hz_to_midi(f_hz: float) -> float:
+    return 69.0 + 12.0 * math.log2(f_hz / 440.0)                                           
+
+def midi_to_note_name(midi: int) -> str:
+    names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    n = int(round(midi))
+    name = names[n % 12]
+    octave = (n // 12) - 1
+    return f"{name}{octave}"
+
+def get_expected_midi_at(t_sec: float):
+    for n in expected_notes:
+        if n["startSec"] <= t_sec < n["endSec"]:
+            return int(n["midi"])
+    return None
+
+@app.route("/session_start", methods=["POST"])
+def session_start():
+    global session_active, session_t0, expected_notes, tolerance_cents, audio_buffer
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "No JSON data"}), 400
+
+    notes = data.get("expectedNotes")
+    if not isinstance(notes, list) or len(notes) == 0:
+        return jsonify({"error": "expectedNotes must be a non-empty list"}), 400
+
+    cleaned = []
+    for n in notes:
+        try:
+            start_sec = float(n["startSec"])
+            end_sec = float(n["endSec"])
+            midi = int(n["midi"])
+            if end_sec <= start_sec:
+                continue
+            cleaned.append({"startSec": start_sec, "endSec": end_sec, "midi": midi})
+        except Exception:
+            continue
+
+    if len(cleaned) == 0:
+        return jsonify({"error": "No valid notes after validation"}), 400
+
+    cleaned.sort(key=lambda x: x["startSec"])
+
+    expected_notes = cleaned
+    tolerance_cents = int(data.get("toleranceCents", 35))
+
+    session_t0 = time.time()
+    session_active = True
+
+    audio_buffer = np.zeros((0,), dtype=np.float32)
+
+    return jsonify({
+        "status": "ok",
+        "notes_loaded": len(expected_notes),
+        "toleranceCents": tolerance_cents
+    })
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
