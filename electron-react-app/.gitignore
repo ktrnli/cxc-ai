@@ -25,3 +25,6 @@ yarn-error.log*
 #backend
 api/venv/
 api/__pycache__/
+
+package-lock.json
+.venv
