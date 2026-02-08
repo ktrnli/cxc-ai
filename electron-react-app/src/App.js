@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { Home, Running, Feedback } from "./pages";
 import './index.css';
-import Background from './components/background';
+import Background from './components/Background';
 
 
 

@@ -1,0 +1,13 @@
+.pitchLabel {
+  position: absolute;
+  height: 43px;
+  left: 411px;
+  top: 610px;
+  width: 141px;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
