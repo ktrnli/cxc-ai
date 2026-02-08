@@ -42,7 +42,7 @@ const Running = () => {
       setListening(false);
 
       if (shouldNavigate) {
-        navigate("/feedback");
+        navigate("/");
       }
     },
     [navigate]

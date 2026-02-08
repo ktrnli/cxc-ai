@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import ReactDOM from 'react-dom/client';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import { Home, Running, Feedback } from "./pages";
+import { Home, Running } from "./pages";
 import './index.css';
 import Background from './components/background';
 
@@ -14,14 +14,13 @@ const App = () => {
       audioIntensity={2.66}
       hue={301}
       backgroundColor="#400194"
-      externalEnabled={someState}
+      externalEnabled={true}
     />
     <Router>
       <Routes>
 
         <Route path="/" element={<Home />} />
         <Route path="/running" element={<Running />} />
-        <Route path="/feedback" element={<Feedback />} />
 
       </Routes>
     </Router>
