@@ -1,13 +1,16 @@
 import { Mesh, Program, Renderer, Triangle, Vec3 } from 'ogl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from "react";
 import '../index.css';
 
 export default function Background({
   hue = 0,
   audioIntensity = 0.2,
-  backgroundColor = '#000000'
+  backgroundColor = '#000000',
+  externalEnabled,
 }) {
   const ctnDom = useRef(null);
+  const [enabled, setEnabled] = useState(true);
+  const isOn = externalEnabled ?? enabled;
 
   const vert = /* glsl */ `
     precision highp float;
@@ -183,7 +186,7 @@ export default function Background({
 
   useEffect(() => {
     const container = ctnDom.current;
-    if (!container) return;
+    if (!container && !isOn) return;
 
     const renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
     const gl = renderer.gl;
@@ -279,7 +282,7 @@ export default function Background({
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hue, audioIntensity, backgroundColor]);
+  }, [isOn, hue, audioIntensity, backgroundColor]);
 
   return <div ref={ctnDom} className="orb-container" />;
 }

@@ -14,6 +14,7 @@ const App = () => {
       audioIntensity={2.66}
       hue={301}
       backgroundColor="#400194"
+      externalEnabled={someState}
     />
     <Router>
       <Routes>
